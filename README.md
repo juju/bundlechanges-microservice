@@ -1,2 +1,2 @@
-# bundlechanges-microservice
-A simple microservice exposing bundlechanges functionality as an API
+# bundleservice
+A simple microservice exposing bundlechanges and SVG functionality as an API
