@@ -21,24 +21,24 @@ func getChangesFromStore(w http.ResponseWriter, r *http.Request, params httprout
 func getChangesFromYAML(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
 	bundleYAML := r.FormValue("bundleYAML")
 	if bundleYAML == "" {
-		// error
-		fmt.Print("Bundle is empty")
+		http.Error(w, "Bundle is empty", 400)
+		return
 	}
 	bundle, err := charm.ReadBundleData(strings.NewReader(bundleYAML))
 	if err != nil {
-		// error
-		fmt.Printf("Error reading bundle data: %v", err)
+		http.Error(w, fmt.Sprintf("Error reading bundle data: %v", err), 422)
+		return
 	}
 	err = bundle.Verify(nil, nil)
 	if err != nil {
-		// error
-		fmt.Printf("Error verifying bundle data: %v", err)
+		http.Error(w, fmt.Sprintf("Error verifying bundle data: %v", err), 422)
+		return
 	}
 	changes := bundlechanges.FromData(bundle)
 	changesJSON, err := json.Marshal(changes)
 	if err != nil {
-		// error
-		fmt.Printf("Error marshalling JSON: %v", err)
+		http.Error(w, fmt.Sprintf("Error marshalling JSON: %v", err), 500)
+		return
 	}
 	fmt.Fprint(w, string(changesJSON))
 }
