@@ -7,49 +7,72 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/juju/bundlechanges"
 	"gopkg.in/juju/charm.v6-unstable"
 
-	"github.com/juju/bundlechanges"
+	"github.com/juju/httprequest"
 	"github.com/julienschmidt/httprouter"
 )
 
-func getChangesFromStore(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	bundleURL := params.ByName("bundleURL")[1:]
-	fmt.Fprintf(w, "Not implemented; bundle requested: %s", bundleURL)
+// Set up the server
+type handler struct{}
+
+type errorResponse struct {
+	Message string
 }
 
-func getChangesFromYAML(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	bundleYAML := r.FormValue("bundleYAML")
-	if bundleYAML == "" {
-		http.Error(w, "Bundle is empty", 400)
-		return
+var errorMapper httprequest.ErrorMapper = func(err error) (int, interface{}) {
+	return http.StatusInternalServerError, &errorResponse{
+		Message: err.Error(),
 	}
-	bundle, err := charm.ReadBundleData(strings.NewReader(bundleYAML))
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error reading bundle data: %v", err), 422)
-		return
-	}
-	err = bundle.Verify(nil, nil)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error verifying bundle data: %v", err), 422)
-		return
-	}
-	changes := bundlechanges.FromData(bundle)
-	changesJSON, err := json.Marshal(changes)
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Error marshalling JSON: %v", err), 500)
-		return
-	}
-	fmt.Fprint(w, string(changesJSON))
 }
 
 func main() {
 	router := httprouter.New()
 	// Add handlers
-	// TODO:
-	//router.GET("/bundlesvg/fromStore/*bundleURL", getSVGFromStore)
-	//router.POST("/bundlesvg/fromYAML/", getSVGFromYAML)
-	//router.GET("/bundlechanges/fromStore/*bundleURL", getChangesFromStore)
-	router.POST("/bundlechanges/fromYAML/", getChangesFromYAML)
+	f := func(p httprequest.Params) (*handler, error) {
+		return &handler{}, nil
+	}
+	for _, h := range errorMapper.Handlers(f) {
+		router.Handle(h.Method, h.Path, h.Handle)
+	}
 	log.Fatal(http.ListenAndServe(":8000", router))
+}
+
+type changesResponse struct {
+	changes string
+}
+
+// Retrieving changes from YAML
+type changesFromYAMLParams struct {
+	httprequest.Route `httprequest:"POST /bundlechanges/fromYAML"`
+	//NicelyFormatted   bool   `httprequest:"nice,form"`
+	Body string `httprequest:",body"`
+}
+
+func (h *handler) GetChangesFromYAML(p *changesFromYAMLParams) (changesResponse, error) {
+	changes, err := getChanges(p.Body)
+	if err != nil {
+		return changesResponse{}, err
+	}
+	return changesResponse{
+		changes: changes,
+	}, nil
+}
+
+func getChanges(bundleYAML string) (string, error) {
+	bundle, err := charm.ReadBundleData(strings.NewReader(bundleYAML))
+	if err != nil {
+		return "", fmt.Errorf("Error reading bundle data: %v", err)
+	}
+	err = bundle.Verify(nil, nil)
+	if err != nil {
+		return "", fmt.Errorf("Error verifying bundle data: %v", err)
+	}
+	changes := bundlechanges.FromData(bundle)
+	changesJSON, err := json.Marshal(changes)
+	if err != nil {
+		return "", fmt.Errorf("Error marshalling JSON: %v", err)
+	}
+	return string(changesJSON), nil
 }

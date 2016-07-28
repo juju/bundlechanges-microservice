@@ -1,4 +1,4 @@
-bundleYAML=services:
+services:
   mongodb:
     charm: "cs:precise/mongodb-21"
     num_units: 1
