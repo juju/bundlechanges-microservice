@@ -1,14 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
-	"net/http/httptest"
-	"strings"
 	"testing"
-
-	"github.com/julienschmidt/httprouter"
 
 	gc "gopkg.in/check.v1"
 	//"gopkg.in/juju/charm.v6-unstable"
@@ -32,20 +25,25 @@ applications:
     constraints: "mem=2G cpu-cores=1"
 series: precise
 `
-
-	rec := httptest.NewRecorder()
-	handler := func(_ http.ResponseWriter, r *http.Request) {
-		getChangesFromYAML(rec, r, httprouter.Params{})
+	request := changesFromYAMLParams{
+		Body: changesRequest{
+			Bundle: bundle,
+		},
 	}
+	h := handler{}
+	response, err := h.GetChangesFromYAML(&request)
+	c.Assert(err, gc.IsNil)
+	c.Assert(len(response.Changes), gc.Equals, 4)
+}
 
-	ts := httptest.NewServer(http.HandlerFunc(handler))
-	defer ts.Close()
-
-	_, err := http.NewRequest("POST", ts.URL, strings.NewReader(fmt.Sprintf("bundleYAML=%s", bundle)))
-	if err != nil {
-		log.Fatal(err)
+func (s *newSuite) TestGetChangesForBundleError(c *gc.C) {
+	request := changesFromYAMLParams{
+		Body: changesRequest{
+			Bundle: "bad-wolf",
+		},
 	}
-
-	c.Logf("%v", rec)
-	c.Fail()
+	h := handler{}
+	response, err := h.GetChangesFromYAML(&request)
+	c.Assert(response, gc.DeepEquals, changesResponse{})
+	c.Assert(err.Error(), gc.Equals, "error reading bundle data: cannot unmarshal bundle data: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `bad-wolf` into charm.legacyBundleData")
 }

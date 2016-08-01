@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -14,7 +13,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// Set up the server
+// The handler type contains all of the handlers for the server.
 type handler struct{}
 
 type errorResponse struct {
@@ -40,39 +39,39 @@ func main() {
 }
 
 type changesResponse struct {
-	changes string
+	Changes []bundlechanges.Change
+}
+
+type changesRequest struct {
+	Bundle string
 }
 
 // Retrieving changes from YAML
 type changesFromYAMLParams struct {
 	httprequest.Route `httprequest:"POST /bundlechanges/fromYAML"`
-	//NicelyFormatted   bool   `httprequest:"nice,form"`
-	Body string `httprequest:",body"`
+	NicelyFormatted   bool           `httprequest:"nice,form"`
+	Body              changesRequest `httprequest:",body"`
 }
 
 func (h *handler) GetChangesFromYAML(p *changesFromYAMLParams) (changesResponse, error) {
-	changes, err := getChanges(p.Body)
+	changes, err := getChanges(p.Body.Bundle)
 	if err != nil {
 		return changesResponse{}, err
 	}
 	return changesResponse{
-		changes: changes,
+		Changes: changes,
 	}, nil
 }
 
-func getChanges(bundleYAML string) (string, error) {
+func getChanges(bundleYAML string) ([]bundlechanges.Change, error) {
 	bundle, err := charm.ReadBundleData(strings.NewReader(bundleYAML))
 	if err != nil {
-		return "", fmt.Errorf("Error reading bundle data: %v", err)
+		return nil, fmt.Errorf("error reading bundle data: %v", err)
 	}
 	err = bundle.Verify(nil, nil)
 	if err != nil {
-		return "", fmt.Errorf("Error verifying bundle data: %v", err)
+		return nil, fmt.Errorf("error verifying bundle data: %v", err)
 	}
 	changes := bundlechanges.FromData(bundle)
-	changesJSON, err := json.Marshal(changes)
-	if err != nil {
-		return "", fmt.Errorf("Error marshalling JSON: %v", err)
-	}
-	return string(changesJSON), nil
+	return changes, nil
 }
