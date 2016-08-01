@@ -13,6 +13,9 @@ help:
 	@echo "  install - install the library in your GOPATH"
 	@echo "  clean - clean the project"
 
+run:
+	go run server.go
+
 # Start of GOPATH-dependent targets. Some targets only make sense -
 # and will only work - when this tree is found on the GOPATH.
 ifeq ($(CURDIR),$(PROJECT_DIR))
@@ -33,6 +36,9 @@ clean:
 	go clean $(PROJECT)/...
 
 else
+
+run:
+	$(error Cannot $@; $(CURDIR) is not on GOPATH)
 
 deps:
 	$(error Cannot $@; $(CURDIR) is not on GOPATH)
