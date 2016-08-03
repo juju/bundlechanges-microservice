@@ -1,16 +1,23 @@
+// Package params holds all of the request and response parameters for endpoints, along
+// with any required structs.
 package params
 
-import (
-	"github.com/juju/httprequest"
+import "github.com/juju/httprequest"
 
-	"github.com/juju/bundlechanges"
-)
+// Change represents one change in the change set that the GUI needs to execute
+// to deploy the bundle.
+type Change struct {
+	Args     []interface{} `json:"args"`
+	Id       string        `json:"id"`
+	Requires []string      `json:"requires"`
+	Method   string        `json:"method"`
+}
 
 // ChangesResponse contains the results of parsing a bundle into a list of
 // changes.
 type ChangesResponse struct {
 	// TODO This should be an API specific type
-	Changes []bundlechanges.Change `json:"changes"`
+	Changes []Change `json:"changes"`
 }
 
 // ChangesRequest contains the bundle as a YAML-encoded string which is to be
