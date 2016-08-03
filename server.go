@@ -1,3 +1,6 @@
+// The main package runs the bundleservice server, a microservice which provides
+// API endpoints for various bundle-related functionalities, such as retrieving
+// the list of changes which the bundle describes.
 package main
 
 import (
@@ -7,11 +10,11 @@ import (
 	"strings"
 
 	"github.com/juju/bundlechanges"
-	"github.com/juju/bundleservice/params"
-	"gopkg.in/juju/charm.v6-unstable"
-
 	"github.com/juju/httprequest"
 	"github.com/julienschmidt/httprouter"
+	"gopkg.in/juju/charm.v6-unstable"
+
+	"github.com/juju/bundleservice/params"
 )
 
 // main builds and runs the server when the run command is called.
@@ -36,6 +39,7 @@ type errorResponse struct {
 }
 
 // errorMapper maps an error from a handler into an HTTP server error.
+// TODO map other errors
 var errorMapper httprequest.ErrorMapper = func(err error) (int, interface{}) {
 	return http.StatusInternalServerError, &errorResponse{
 		Message: err.Error(),
@@ -46,6 +50,7 @@ var errorMapper httprequest.ErrorMapper = func(err error) (int, interface{}) {
 // of changes.
 func (h *handler) GetChangesFromYAML(p *params.ChangesFromYAMLParams) (params.ChangesResponse, error) {
 	changes, err := getChanges(p.Body.Bundle)
+	// TODO switch to errgo or juju/errors
 	if err != nil {
 		return params.ChangesResponse{}, err
 	}
@@ -66,5 +71,6 @@ func getChanges(bundleYAML string) ([]bundlechanges.Change, error) {
 		return nil, fmt.Errorf("error verifying bundle data: %v", err)
 	}
 	changes := bundlechanges.FromData(bundle)
+	// TODO changes should be transmogrified into an API specific type
 	return changes, nil
 }

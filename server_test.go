@@ -46,5 +46,5 @@ func (s *bundleServiceSuite) TestGetChangesForBundleError(c *gc.C) {
 	h := handler{}
 	response, err := h.GetChangesFromYAML(&request)
 	c.Assert(response, gc.DeepEquals, params.ChangesResponse{})
-	c.Assert(err.Error(), gc.Equals, "error reading bundle data: cannot unmarshal bundle data: yaml: unmarshal errors:\n  line 1: cannot unmarshal !!str `bad-wolf` into charm.legacyBundleData")
+	c.Assert(err, gc.ErrorMatches, `error reading bundle data: cannot unmarshal bundle data: yaml: unmarshal errors:\n.*`)
 }

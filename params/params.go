@@ -1,20 +1,22 @@
 package params
 
 import (
-	"github.com/juju/bundlechanges"
 	"github.com/juju/httprequest"
+
+	"github.com/juju/bundlechanges"
 )
 
 // ChangesResponse contains the results of parsing a bundle into a list of
 // changes.
 type ChangesResponse struct {
-	Changes []bundlechanges.Change
+	// TODO This should be an API specific type
+	Changes []bundlechanges.Change `json:"changes"`
 }
 
-// ChangesRequest contains the bundle which is to be parsed into a list of
-// changes.
+// ChangesRequest contains the bundle as a YAML-encoded string which is to be
+// parsed into a list of changes.
 type ChangesRequest struct {
-	Bundle string
+	Bundle string `json:"bundle"`
 }
 
 // ChangesFromYAMLParams contains the parameters required for passing a bundle
