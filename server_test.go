@@ -35,6 +35,46 @@ series: precise
 	response, err := h.GetChangesFromYAML(&request)
 	c.Assert(err, gc.IsNil)
 	c.Assert(len(response.Changes), gc.Equals, 4)
+	expected := []params.Change{
+		params.Change{
+			Args:     []interface{}{"cs:precise/mongodb-21"},
+			Id:       "addCharm-0",
+			Requires: []string{},
+			Method:   "addCharm",
+		}, params.Change{
+			Args: []interface{}{
+				"$addCharm-0",
+				"mongodb",
+				map[string]interface{}{},
+				"mem=2G cpu-cores=1",
+				map[string]string{},
+				map[string]string{},
+			},
+			Id:       "deploy-1",
+			Requires: []string{"addCharm-0"},
+			Method:   "deploy",
+		}, params.Change{
+			Args: []interface{}{
+				"$deploy-1", "application",
+				map[string]string{
+					"gui-x": "940.5",
+					"gui-y": "388.7698359714502",
+				},
+			},
+			Id:       "setAnnotations-2",
+			Requires: []string{"deploy-1"},
+			Method:   "setAnnotations",
+		}, params.Change{
+			Args: []interface{}{
+				"$deploy-1",
+				interface{}(nil),
+			},
+			Id:       "addUnit-3",
+			Requires: []string{"deploy-1"},
+			Method:   "addUnit"},
+	}
+
+	c.Assert(response.Changes, gc.DeepEquals, expected)
 }
 
 func (s *bundleServiceSuite) TestGetChangesForBundleError(c *gc.C) {
