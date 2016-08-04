@@ -73,7 +73,6 @@ series: precise
 			Requires: []string{"deploy-1"},
 			Method:   "addUnit"},
 	}
-
 	c.Assert(response.Changes, gc.DeepEquals, expected)
 }
 
