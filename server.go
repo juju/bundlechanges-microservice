@@ -1,4 +1,4 @@
-// The main package runs the bundleservice server, a microservice which provides
+// Package main runs the bundleservice server, a microservice which provides
 // API endpoints for various bundle-related functionalities, such as retrieving
 // the list of changes which the bundle describes.
 package main
@@ -61,7 +61,7 @@ func (h *handler) GetChangesFromYAML(p *params.ChangesFromYAMLParams) (params.Ch
 
 // getChanges recieves a bundle in YAML format as a string and returns the list
 // of changes from the changeset.
-func getChanges(bundleYAML string) ([]bundlechanges.Change, error) {
+func getChanges(bundleYAML string) ([]params.Change, error) {
 	bundle, err := charm.ReadBundleData(strings.NewReader(bundleYAML))
 	if err != nil {
 		return nil, fmt.Errorf("error reading bundle data: %v", err)
@@ -71,6 +71,14 @@ func getChanges(bundleYAML string) ([]bundlechanges.Change, error) {
 		return nil, fmt.Errorf("error verifying bundle data: %v", err)
 	}
 	changes := bundlechanges.FromData(bundle)
-	// TODO changes should be transmogrified into an API specific type
-	return changes, nil
+	changeSet := make([]params.Change, len(changes))
+	for i, change := range changes {
+		changeSet[i] = params.Change{
+			Id:       change.Id(),
+			Args:     change.GUIArgs(),
+			Requires: change.Requires(),
+			Method:   change.Method(),
+		}
+	}
+	return changeSet, nil
 }
