@@ -37,18 +37,20 @@ series: precise
 	c.Assert(len(response.Changes), gc.Equals, 4)
 	expected := []params.Change{
 		params.Change{
-			Args:     []interface{}{"cs:precise/mongodb-21"},
+			Args:     []interface{}{"cs:precise/mongodb-21", "precise"},
 			Id:       "addCharm-0",
 			Requires: []string{},
 			Method:   "addCharm",
 		}, params.Change{
 			Args: []interface{}{
 				"$addCharm-0",
+				"precise",
 				"mongodb",
 				map[string]interface{}{},
 				"mem=2G cpu-cores=1",
 				map[string]string{},
 				map[string]string{},
+				map[string]int{},
 			},
 			Id:       "deploy-1",
 			Requires: []string{"addCharm-0"},
