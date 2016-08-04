@@ -72,7 +72,6 @@ func getChanges(bundleYAML string) ([]params.Change, error) {
 	}
 	changes := bundlechanges.FromData(bundle)
 	changeSet := make([]params.Change, len(changes))
-	// TODO changes should be transmogrified into an API specific type
 	for i, change := range changes {
 		changeSet[i] = params.Change{
 			Id:       change.Id(),

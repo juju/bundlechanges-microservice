@@ -16,7 +16,6 @@ type Change struct {
 // ChangesResponse contains the results of parsing a bundle into a list of
 // changes.
 type ChangesResponse struct {
-	// TODO This should be an API specific type
 	Changes []Change `json:"changes"`
 }
 
