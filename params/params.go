@@ -4,6 +4,19 @@ package params
 
 import "github.com/juju/httprequest"
 
+// ErrorCode allows for const errors
+type ErrorCode string
+
+// Error returns the code as a string
+func (code ErrorCode) Error() string {
+	return string(code)
+}
+
+// Error constants provided to be used by the server.
+const (
+	ErrUnparsable ErrorCode = "unparsable data"
+)
+
 // Change represents one change in the change set that the GUI needs to execute
 // to deploy the bundle.
 type Change struct {

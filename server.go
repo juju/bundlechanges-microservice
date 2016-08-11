@@ -4,7 +4,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/juju/bundlechanges"
 	"github.com/juju/httprequest"
 	"github.com/julienschmidt/httprouter"
+	"gopkg.in/errgo.v1"
 	"gopkg.in/juju/charm.v6-unstable"
 
 	"github.com/juju/bundleservice/params"
@@ -41,7 +41,13 @@ type errorResponse struct {
 // errorMapper maps an error from a handler into an HTTP server error.
 // TODO map other errors
 var errorMapper httprequest.ErrorMapper = func(err error) (int, interface{}) {
-	return http.StatusInternalServerError, &errorResponse{
+	status := http.StatusInternalServerError
+	cause := errgo.Cause(err)
+	switch cause {
+	case params.ErrUnparsable:
+		status = 422 // "Unprocessable Entity" - http doesn't have a const for this error.
+	}
+	return status, &errorResponse{
 		Message: err.Error(),
 	}
 }
@@ -50,7 +56,6 @@ var errorMapper httprequest.ErrorMapper = func(err error) (int, interface{}) {
 // of changes.
 func (h *handler) GetChangesFromYAML(p *params.ChangesFromYAMLParams) (params.ChangesResponse, error) {
 	changes, err := getChanges(p.Body.Bundle)
-	// TODO switch to errgo or juju/errors
 	if err != nil {
 		return params.ChangesResponse{}, err
 	}
@@ -64,11 +69,11 @@ func (h *handler) GetChangesFromYAML(p *params.ChangesFromYAMLParams) (params.Ch
 func getChanges(bundleYAML string) ([]params.Change, error) {
 	bundle, err := charm.ReadBundleData(strings.NewReader(bundleYAML))
 	if err != nil {
-		return nil, fmt.Errorf("error reading bundle data: %v", err)
+		return nil, errgo.WithCausef(err, params.ErrUnparsable, "error reading bundle data")
 	}
 	err = bundle.Verify(nil, nil)
 	if err != nil {
-		return nil, fmt.Errorf("error verifying bundle data: %v", err)
+		return nil, errgo.WithCausef(err, params.ErrUnparsable, "error verifying bundle data")
 	}
 	changes := bundlechanges.FromData(bundle)
 	changeSet := make([]params.Change, len(changes))
