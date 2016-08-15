@@ -4,17 +4,28 @@ package params
 
 import "github.com/juju/httprequest"
 
-// ErrorCode allows for const errors
+// StatusUnprocessableEntity describes a request that is correct, but the Entity
+// provided in the request is not able to be processed.
+const StatusUnprocessableEntity = 422
+
+// ErrorResponse represents an error encountered by the server.
+type ErrorResponse struct {
+	Message string
+	Code    ErrorCode
+}
+
+// ErrorCode holds the code of an error returned from the API.
 type ErrorCode string
 
-// Error returns the code as a string
+// Error implements errrors.Error.
 func (code ErrorCode) Error() string {
 	return string(code)
 }
 
-// Error constants provided to be used by the server.
+// Possible ErrorCodes from the API.
 const (
-	ErrUnparsable ErrorCode = "unparsable data"
+	ErrUnparsable          ErrorCode = "unparsable data"
+	ErrVerificationFailure ErrorCode = "data cannot be verified"
 )
 
 // Change represents one change in the change set that the GUI needs to execute

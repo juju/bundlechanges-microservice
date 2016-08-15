@@ -33,22 +33,19 @@ func main() {
 // The handler type contains all of the handlers for the server.
 type handler struct{}
 
-// errorResponse represents an error encountered by the server.
-type errorResponse struct {
-	Message string
-}
-
 // errorMapper maps an error from a handler into an HTTP server error.
 // TODO map other errors
 var errorMapper httprequest.ErrorMapper = func(err error) (int, interface{}) {
 	status := http.StatusInternalServerError
 	cause := errgo.Cause(err)
+	code := cause.(params.ErrorCode)
 	switch cause {
-	case params.ErrUnparsable:
-		status = 422 // "Unprocessable Entity" - http doesn't have a const for this error.
+	case params.ErrUnparsable, params.ErrVerificationFailure:
+		status = params.StatusUnprocessableEntity
 	}
-	return status, &errorResponse{
+	return status, &params.ErrorResponse{
 		Message: err.Error(),
+		Code:    code,
 	}
 }
 
@@ -73,7 +70,7 @@ func getChanges(bundleYAML string) ([]params.Change, error) {
 	}
 	err = bundle.Verify(nil, nil)
 	if err != nil {
-		return nil, errgo.WithCausef(err, params.ErrUnparsable, "error verifying bundle data")
+		return nil, errgo.WithCausef(err, params.ErrVerificationFailure, "error verifying bundle data")
 	}
 	changes := bundlechanges.FromData(bundle)
 	changeSet := make([]params.Change, len(changes))
