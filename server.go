@@ -17,17 +17,51 @@ import (
 	"github.com/juju/bundleservice/params"
 )
 
+// server represents a bundleservice HTTP server
+type server struct {
+	router *httprouter.Router
+}
+
+// ServeHTTP implements http.Handler.Handle.
+func (srv *server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	header := w.Header()
+	ao := "*"
+	if o := req.Header.Get("Origin"); o != "" {
+		ao = o
+	}
+	header.Set("Access-Control-Allow-Origin", ao)
+	header.Set("Access-Control-Allow-Headers", "Bakery-Protocol-Version, Macaroons, X-Requested-With, Content-Type")
+	header.Set("Access-Control-Allow-Credentials", "true")
+	header.Set("Access-Control-Cache-Max-Age", "600")
+	// TODO: in handlers, look up methods for this request path and return only those methods here.
+	header.Set("Access-Control-Allow-Methods", "POST,OPTIONS")
+	header.Set("Access-Control-Expose-Headers", "WWW-Authenticate")
+	srv.router.ServeHTTP(w, req)
+}
+
+// options is a no-op handler that responds to OPTIONS requests for each path.
+func (srv *server) options(http.ResponseWriter, *http.Request, httprouter.Params) {
+	// no-op
+}
+
 // main builds and runs the server when the run command is called.
 func main() {
-	router := httprouter.New()
+	srv := &server{
+		router: httprouter.New(),
+	}
 	// Add handlers
 	f := func(p httprequest.Params) (*handler, error) {
 		return &handler{}, nil
 	}
 	for _, h := range errorMapper.Handlers(f) {
-		router.Handle(h.Method, h.Path, h.Handle)
+		srv.router.Handle(h.Method, h.Path, h.Handle)
+		srv.router.OPTIONS(h.Path, srv.options)
 	}
-	log.Fatal(http.ListenAndServe(":8000", router))
+	httpServer := &http.Server{
+		Addr:    "0.0.0.0:8000",
+		Handler: srv,
+	}
+	log.Fatal(httpServer.ListenAndServe())
 }
 
 // The handler type contains all of the handlers for the server.
