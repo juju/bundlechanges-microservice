@@ -56,3 +56,23 @@ type ChangesFromYAMLParams struct {
 	NicelyFormatted   bool           `httprequest:"nice,form"`
 	Body              ChangesRequest `httprequest:",body"`
 }
+
+// DebugInfo Params contains the parameters for getting debug info.
+type DebugInfoParams struct {
+	httprequest.Route `httprequest:"GET /debug/info"`
+}
+
+// VersionInfo holds information about the git commit of bundleservice
+// and bundlechanges.
+type VersionInfo struct {
+	GitCommit           string
+	BundlechangesCommit string
+}
+
+// Version holds the current version of the service.
+var Version = unknownVersion
+
+var unknownVersion = VersionInfo{
+	GitCommit:           "unknown git revision",
+	BundlechangesCommit: "unknown bundlechanges revision",
+}
