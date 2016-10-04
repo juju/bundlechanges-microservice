@@ -95,6 +95,12 @@ func (h *handler) GetChangesFromYAML(p *params.ChangesFromYAMLParams) (params.Ch
 	}, nil
 }
 
+// DebugInfo returns information about the version of bundleservice and
+// bundlechanges in a JSON object.
+func (h *handler) DebugInfo(p *params.DebugInfoParams) (params.VersionInfo, error) {
+	return params.Version, nil
+}
+
 // getChanges recieves a bundle in YAML format as a string and returns the list
 // of changes from the changeset.
 func getChanges(bundleYAML string) ([]params.Change, error) {
