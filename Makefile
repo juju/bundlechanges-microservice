@@ -39,7 +39,7 @@ clean:
 	go clean $(PROJECT)/...
 
 # Generate version information
-params/init.go: params/init.go.tmpl
+params/init.go: params/init.go.tmpl FORCE
 	gofmt -r "unknownVersion -> VersionInfo{GitCommit: \"${GIT_COMMIT}\", BundlechangesCommit: \"${BUNDLECHANGES_COMMIT}\",}" $< > $@
 
 else
@@ -65,4 +65,4 @@ clean:
 endif
 # End of GOPATH-dependent targets.
 
-.PHONY: help deps build check install clean
+.PHONY: help deps build check install clean FORCE
